@@ -1,12 +1,5 @@
 from datetime import datetime
 
-# --- 정기 회원 (번호판 → 이름/할인율 %) ---
-members = {
-    '37바4821': {'name': 'kim',  'discount': 80},
-    '92가1034': {'name': 'park', 'discount': 50},
-    '15나7749': {'name': 'lee',  'discount': 0},
-}
-
 # --- 좌석 타입 맵 (D: 장애인, E: 전기차, N: 일반) ---
 seat_types = [
     # A행: 0~2는 장애인, 5~7은 전기차
@@ -29,6 +22,15 @@ seats = [[EMPTY_ICON[t] for t in row] for row in seat_types]
 # --- 점유 테이블 (번호판 → 위치/입차시간) ---
 occupied = {}
 
+
+# --- 정기 회원 (번호판 → 이름/할인율 %) ---
+members = {
+    '11가1234': {'name': '정지아1',  'discount': 80},
+    '22나2345': {'name': '정지아2', 'discount': 50},
+    '33나3456': {'name': '정지아3',  'discount': 0},
+}
+
+    
 # ===== 유틸 함수 =====
 
 def row_char_to_index(ch: str) -> int:

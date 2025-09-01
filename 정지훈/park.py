@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 
 members = {
     '37바4821' : {
@@ -41,6 +42,8 @@ occupied = {
 }
 
 special_position = [0, 1, 2, 5, 6, 7]
+disabled_position = [0,1,2]
+electric_position = [5,6,7]
 
 def alphabet_to_number(text):
     return ord(text.upper()) - 65
@@ -52,31 +55,28 @@ while True:
     
     in_out = input("Enter in or out(1: in, 2: out): ")
     if in_out == '1':
-        print(seats)
+        print(*seats, sep='\n')
         
         restart = 0
         desire_pos = input("Enter your desired position(Ex: A5): ")
         desire_pos0 = alphabet_to_number(desire_pos[0])
         desire_pos1 = int(desire_pos[1])-1   
-        for i in special_position:
-            if (desire_pos0 == 0) and (desire_pos1==i):
-                dis_or_elec = input("Are you disabled or have an electric vehicle?(d: disabled, e: electric, b: both, n:none): ")
-                if dis_or_elec == 'n':
-                    print("Invalid position")
+        if (desire_pos0 == 0) and (desire_pos1 in special_position):
+            dis_or_elec = input("Are you disabled or have an electric vehicle?(d: disabled, e: electric, b: both, n:none): ")
+            if dis_or_elec == 'n':
+                print("Invalid position")
+                restart +=1
+                continue
+            elif dis_or_elec == 'd':
+                if desire_pos1 in electric_position:
+                    print("This spot is for electric vehicles")
                     restart +=1
-                    break
-                elif dis_or_elec == 'd':
-                    if (desire_pos1 == 5) or (desire_pos1 == 6) or (desire_pos1 == 7):
-                        print("Position for electric vehicles")
-                        restart +=1
-                        break
-                elif dis_or_elec == 'e':
-                    if (desire_pos1 == 0) or (desire_pos1 == 1) or (desire_pos1 == 2):
-                        print("Position for disabled")
-                        restart +=1
-                        break
-        if restart>=1:
-            continue
+                    continue
+            elif dis_or_elec == 'e':
+                if desire_pos1 in disabled_position:
+                    print("This spot is for disabled")
+                    restart +=1
+                    continue
                     
         if seats[desire_pos0][desire_pos1] == '⬛':
                 print("Selected position is already occupied")
@@ -89,29 +89,31 @@ while True:
                                 break
                     if len(empty_pos)>=3:
                         break
-                print(f"{empty_pos}is recommended")                
+                print(f"{empty_pos}is recommended")
+                continue                
         else:
             seats[desire_pos0][desire_pos1] = '⬛'
             print("Successfully selected")
                 
-        car_num = input("Enter your car number(Ex: 12다1234): ")
+        car_num = input("Enter your car number(Ex:12다1234): ")
         in_time = input("Enter your entrance time(YYYY-MM-DD HH:MM): ")
         
         occupied[car_num] = {
             'position' : desire_pos,
             'entrance' : in_time
         }
-        print(seats)
-        print(occupied)
+        print(*seats, sep='\n')
+        print(json.dumps(occupied, indent=2, ensure_ascii=False))
             
     elif in_out == '2':
-        car_num = input("Enter your car number(Ex: 12다1234): ")
+        print(json.dumps(occupied, indent=2, ensure_ascii=False))
+        car_num = input("Enter your car number(Ex:12다1234): ")
         if car_num not in occupied:
             print("Invalid car number")
             continue
         print(occupied[car_num])
         
-        out_time = input("Enter your out time(YYYY-MM-DD HH:MM)")
+        out_time = input("Enter your out time(YYYY-MM-DD HH:MM): ")
         in_dt = datetime.strptime(occupied[car_num]['entrance'], "%Y-%m-%d %H:%M")
         out_dt = datetime.strptime(out_time, "%Y-%m-%d %H:%M")
         diff = out_dt - in_dt
@@ -122,15 +124,24 @@ while True:
         else:
             discount = 0
             
-        total_price = (total_30mins-1)*3000
+        total_price = (total_30mins)*3000
         print(f"Your total price is {int(total_price)}won.")
         
         out_position = occupied[car_num]['position']
         out_pos1 = ord(out_position[0])-65
-        out_pos2 = int(out_position[1])
+        out_pos2 = int(out_position[1])-1
         
-        seats[out_pos1][out_pos2] = '⬜'
-        print(seats)
+        if out_pos1 == 0:
+            if out_pos2 in disabled_position:
+                seats[out_pos1][out_pos2] = '♿'    
+            elif out_pos2 in electric_position:
+                seats[out_pos1][out_pos2] = '🔋'    
+            else:
+                seats[out_pos1][out_pos2] = '⬜'
+        else:
+            seats[out_pos1][out_pos2] = '⬜'
+
+        print(*seats, sep='\n')
         
         
     

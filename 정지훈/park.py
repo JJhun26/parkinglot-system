@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+from ocr_test import image_ocr
 
 members = {
     '37바4821' : {
@@ -88,13 +89,19 @@ while True:
     if in_out == '1':
         print("[좌석 현황] (A~D 행, 1~10 열)")
         print("설명: ⬜ 일반 빈자리  ⬛ 점유중  ♿ 장애인 전용  🔋 전기차 전용")
-        print(*seats, sep='\n')
+        header = "     " + "  ".join(f"{i:>2}" for i in range(1, 11))
+        print(header)
+        for r, row in enumerate(seats):
+            line = f"{chr(65+r)} | " + " ".join(f"{cell:>2}" for cell in row)
+            print(line)
+        print()
+            
         
         restart = 0
         desire_pos = input("원하는 주차 위치를 선택하세요(Ex: A5): ")
         desire_pos0 = alphabet_to_number(desire_pos[0])
         desire_pos1 = int(desire_pos[1])-1   
-        dis_or_elec = input("차량 유형 선택(d: 장애인, e: 전기차, b: 장애인+전기차, n:일반): ").lower()
+        dis_or_elec = input("차량 유형 선택(d: 장애인, e: 전기차, n:일반): ").lower()
         if (desire_pos0 == 0) and (desire_pos1 in special_position):
             if dis_or_elec == 'n':
                 print("해당 전용 좌석을 사용할 자격이 없습니다.")
@@ -125,11 +132,12 @@ while True:
             seats[desire_pos0][desire_pos1] = '⬛'
             print("해당 자리로 선택되었습니다.")
                 
-        car_num = input("차량 번호를 입력하세요(Ex:12다1234): ")
+        # car_num = input("차량 번호를 입력하세요(Ex:12다1234): ")
+        vehi_num = image_ocr()
         #in_time = input("Enter your entrance time(YYYY-MM-DD HH:MM): ")
         in_time = datetime.now().strftime("%Y-%m-%d %H:%M")
 
-        occupied[car_num] = {
+        occupied[vehi_num] = {
             'position' : desire_pos,
             'entrance' : in_time
         }

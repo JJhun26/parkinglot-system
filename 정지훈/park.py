@@ -4,7 +4,7 @@ import json
 members = {
     '37바4821' : {
         'name' : 'kim',
-        'discount' : 80,
+        'discount' : 20,
     },
     '92가1034' : {
         'name' : 'park',
@@ -18,8 +18,19 @@ members = {
 
 seats = [['♿', '♿', '♿', '⬛', '⬜', '🔋', '🔋', '🔋', '⬜', '⬜'],
          ['⬛', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬛', '⬜', '⬜'],
-         ['⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜'],
+         ['⬜', '⬛', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜'],
          ['⬜', '⬜', '⬛', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜', '⬜']]
+
+seat_types = [
+    # A행: 0~2는 장애인, 5~7은 전기차
+    ['D','D','D','N','N','E','E','E','N','N'],
+    # B행
+    ['N','N','N','N','N','N','N','N','N','N'],
+    # C행
+    ['N','N','N','N','N','N','N','N','N','N'],
+    # D행
+    ['N','N','N','N','N','N','N','N','N','N']
+]
 
 occupied = {
     '25가1049' : {
@@ -37,8 +48,11 @@ occupied = {
     '90바2819' : {
         'position' : 'D3',
         'entrance' : '2025-05-12 20:30'
+    },
+    '92가1034' : {
+        'position' : 'C2',
+        'entrance': '2025-09-01 10:20'
     }
-    
 }
 
 special_position = [0, 1, 2, 5, 6, 7]
@@ -48,72 +62,92 @@ electric_position = [5,6,7]
 def alphabet_to_number(text):
     return ord(text.upper()) - 65
 
+def is_eligible(row: int, col: int, kind: str) -> bool:
+    """
+    좌석 타입 대비 자격 확인.
+    kind: 'd'(장애인), 'e'(전기차), 'n'(일반)
+    """
+    t = seat_types[row][col]
+    if t == 'D':
+        return kind == 'd'
+    if t == 'E':
+        return kind == 'e'
+    return True  # 일반석은 누구나 가능
+
 while True:
-    run = input("Enter 'exit' to quit the system: ")
-    if run == 'exit':
+    run = input("시스템을 종료하기 위해서는 'exit'를 입력하세요: ").strip().upper()
+    if run == 'EXIT':
         break
     
-    in_out = input("Enter in or out(1: in, 2: out): ")
+    print("===== 주차 시스템 =====")
+    print("1: 입차")
+    print("2: 출차")
+    print("3: 멤버 계정")
+    print("======================")
+    in_out = input("메뉴를 선택하세요: ").strip()
     if in_out == '1':
+        print("[좌석 현황] (A~D 행, 1~10 열)")
+        print("설명: ⬜ 일반 빈자리  ⬛ 점유중  ♿ 장애인 전용  🔋 전기차 전용")
         print(*seats, sep='\n')
         
         restart = 0
-        desire_pos = input("Enter your desired position(Ex: A5): ")
+        desire_pos = input("원하는 주차 위치를 선택하세요(Ex: A5): ")
         desire_pos0 = alphabet_to_number(desire_pos[0])
         desire_pos1 = int(desire_pos[1])-1   
+        dis_or_elec = input("차량 유형 선택(d: 장애인, e: 전기차, b: 장애인+전기차, n:일반): ").lower()
         if (desire_pos0 == 0) and (desire_pos1 in special_position):
-            dis_or_elec = input("Are you disabled or have an electric vehicle?(d: disabled, e: electric, b: both, n:none): ")
             if dis_or_elec == 'n':
-                print("Invalid position")
-                restart +=1
+                print("해당 전용 좌석을 사용할 자격이 없습니다.")
                 continue
             elif dis_or_elec == 'd':
                 if desire_pos1 in electric_position:
-                    print("This spot is for electric vehicles")
-                    restart +=1
+                    print("해당 전용 좌석을 사용할 자격이 없습니다.")
                     continue
             elif dis_or_elec == 'e':
                 if desire_pos1 in disabled_position:
-                    print("This spot is for disabled")
-                    restart +=1
+                    print("해당 전용 좌석을 사용할 자격이 없습니다.")
                     continue
                     
         if seats[desire_pos0][desire_pos1] == '⬛':
-                print("Selected position is already occupied")
+                print("선택한 자리는 이미 사용 중입니다.")
                 empty_pos = []
                 for i in range(len(seats)):
                     for j in range(len(seats[i])):
-                        if seats[i][j] != '⬛':
+                        if seats[i][j] != '⬛' and is_eligible(i, j, dis_or_elec):
                             empty_pos.append(f"{chr(i+65)}{j+1}")
                             if len(empty_pos)>=3:
                                 break
                     if len(empty_pos)>=3:
                         break
-                print(f"{empty_pos}is recommended")
+                print(f"추천 좌석: {empty_pos}")
                 continue                
         else:
             seats[desire_pos0][desire_pos1] = '⬛'
-            print("Successfully selected")
+            print("해당 자리로 선택되었습니다.")
                 
-        car_num = input("Enter your car number(Ex:12다1234): ")
-        in_time = input("Enter your entrance time(YYYY-MM-DD HH:MM): ")
-        
+        car_num = input("차량 번호를 입력하세요(Ex:12다1234): ")
+        #in_time = input("Enter your entrance time(YYYY-MM-DD HH:MM): ")
+        in_time = datetime.now().strftime("%Y-%m-%d %H:%M")
+
         occupied[car_num] = {
             'position' : desire_pos,
             'entrance' : in_time
         }
+        print("[좌석 현황] (A~D 행, 1~10 열)")
+        print("설명: ⬜ 일반 빈자리  ⬛ 점유중  ♿ 장애인 전용  🔋 전기차 전용")
         print(*seats, sep='\n')
         print(json.dumps(occupied, indent=2, ensure_ascii=False))
             
     elif in_out == '2':
         print(json.dumps(occupied, indent=2, ensure_ascii=False))
-        car_num = input("Enter your car number(Ex:12다1234): ")
+        car_num = input("차량 번호를 입력하세요(Ex:12다1234): ")
         if car_num not in occupied:
-            print("Invalid car number")
+            print("등록된 주차 기록이 없습니다.")
             continue
         print(occupied[car_num])
         
-        out_time = input("Enter your out time(YYYY-MM-DD HH:MM): ")
+        #out_time = input("Enter your out time(YYYY-MM-DD HH:MM): ")
+        out_time = datetime.now().strftime("%Y-%m-%d %H:%M")
         in_dt = datetime.strptime(occupied[car_num]['entrance'], "%Y-%m-%d %H:%M")
         out_dt = datetime.strptime(out_time, "%Y-%m-%d %H:%M")
         diff = out_dt - in_dt
@@ -122,13 +156,14 @@ while True:
         if car_num in members:
             discount = members[car_num]['discount']
         else:
-            discount = 0
+            discount = 100
             
-        total_price = (total_30mins)*3000
-        print(f"Your total price is {int(total_price)}won.")
+        total_price = (total_30mins)*10000*(discount*0.01)
+        print(f"Your exit time is {out_dt}")
+        print(f"Your total fee is {int(total_price)}won.")
         
         out_position = occupied[car_num]['position']
-        out_pos1 = ord(out_position[0])-65
+        out_pos1 = alphabet_to_number(out_position[0])
         out_pos2 = int(out_position[1])-1
         
         if out_pos1 == 0:
@@ -140,8 +175,41 @@ while True:
                 seats[out_pos1][out_pos2] = '⬜'
         else:
             seats[out_pos1][out_pos2] = '⬜'
-
+        
+        del occupied[car_num]
+        print("[좌석 현황] (A~D 행, 1~10 열)")
+        print("설명: ⬜ 일반 빈자리  ⬛ 점유중  ♿ 장애인 전용  🔋 전기차 전용")
         print(*seats, sep='\n')
-        
-        
+
+    elif in_out == '3':
+        print(json.dumps(members, indent=2, ensure_ascii=False))
+        new_name = input("이름을 입력하세요: ")
+        new_car = input("차량 번호를 입력하세요(Ex:12다1234): ")
+        if new_car in members:
+            if new_name in members[new_car]['name']:
+                delete_member = input("등록 정보를 삭제하시겠습니까?(Y/N): ").upper()
+                if delete_member == 'Y':
+                    del members[new_car]
+                    print(f" {new_car} 등록 정보가 삭제되었습니다.")
+                    continue
+                else:
+                    continue
+                                   
+        new_discount = input("할인을 위한 유형을 선택하세요(국가유공자: 1, 다자녀: 2, 일반: 3): ")
+    
+        if new_discount=='1':
+            dis_rate = 20
+        elif new_discount=='2':
+            dis_rate = 50
+        else:
+            dis_rate = 0
+
+        members[new_car]={
+                'name' : new_name,
+                'discount' : dis_rate
+            }    
+        print(json.dumps(members, indent=2, ensure_ascii=False))
+
+    else:
+        continue    
     
